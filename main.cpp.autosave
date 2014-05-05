@@ -1,0 +1,9 @@
+#include <QDebug>
+#include <QFile>
+#include <QTextStream>
+
+int main()
+{
+	qDebug() << "Hello world";
+	return 0;
+}
