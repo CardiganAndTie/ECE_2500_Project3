@@ -9,3 +9,7 @@ INCLUDEPATH += .
 
 # Input
 SOURCES += main.cpp
+
+HEADERS += \
+    Cache.h \
+    FileException.h
