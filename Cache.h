@@ -123,16 +123,11 @@ public:
 //if it does, it returns the way's index, otherwise it returns -1
 int Cache::findTag(long tagToFind, int setToCheck)
 {
-    //FDB
-    //qDebug() << "it is" << cacheData->at(0)->at(setToCheck);
-    //qDebug() << "cache way # is" << cacheData->size() << "and the size of each way is" << cacheData->at(0)->size();
     for(int i = 0; i < cacheData->size(); i++)
     {
         if (cacheData->at(i)->at(setToCheck) == tagToFind)
         {
-            //FDB
-            qDebug() << "Found tag is" << cacheData->at(i)->at(setToCheck);
-            return i; //
+            return i;
         }
     }
     return -1;
@@ -164,43 +159,27 @@ void Cache::init()
 
     this->waySize = blockNum/compNum;
 
-    //FDB
-    qDebug() << "done setting waySize to " << waySize << " and setting compNum to " << compNum;
 
     for(int i = 0; i < compNum; i++)
     {
-        //FDB
-        //qDebug() << "started vector " << i;
         QVector<long>* temp = new QVector<long>(waySize);
         temp->fill(-1); //fills it with -1, indicating empty
         cacheData->append(temp);
 
-        //FDB
-       // qDebug() << "added way vector" << i;
 
         QVector<int>* ageTemp = new QVector<int>(waySize);
-        //FDB
-        //qDebug() << "constructed age vector" << i;
         ageTemp->fill(0);
-        //qDebug() << "filled age vector" << i;
         ageData->append(ageTemp);
 
-        //FDB
-       // qDebug() << "added age vector" << i;
 
         QVector<bool>* dirtyTemp = new QVector<bool>(waySize);
         dirtyTemp->fill(false);         //initialize everything as false
         dirtyBits->append(dirtyTemp);
 
-        //FDB
-        //qDebug() << "added dirty vector" << i;
 
-        //FDB
-        //qDebug() << "finished vector " << i;
 
     }
-    //FDB
-    qDebug() << "done preparing vectors";
+
 }
 
 bool Cache::isEmpty(int wayToCheck, int setToCheck)
@@ -213,20 +192,15 @@ bool Cache::isEmpty(int wayToCheck, int setToCheck)
 //Otherwise returns -1
 int Cache::findEmptyWay(int setToCheck)
 {
-    qDebug() << "There are" << cacheData->size()<< "ways";
     for(int wayInd = 0; wayInd < cacheData->size(); wayInd++)
     {
-        //FDB
-        qDebug() << "way" << wayInd << "at set" << setToCheck << "has" << this->at(wayInd,setToCheck);
+
         if(this->isEmpty(wayInd,setToCheck)) //Check if this is empty
         {
-            qDebug() << "way"<< wayInd << "is empty.";
             return wayInd;
 
         }
     }
-    //FDB
-    qDebug() << "no empty way found";
     return -1;
 }
 
@@ -338,10 +312,16 @@ void Cache::readFile(QString fileName)
 
     QTextStream stream(&input);
 
+    //bool isTab = false;
+
     while(!stream.atEnd())
     {
         QString readLine = stream.readLine();
-        QStringList lineData = readLine.split(" ");
+        QStringList lineData;
+        if(readLine.contains("\t"))
+            lineData = readLine.split("\t");
+        else
+            lineData = readLine.split(" ");
         if(lineData.at(0).contains("re"))
             RWList.append(read_I);
         else if(lineData.at(0).contains("wr")) RWList.append(write_I);
@@ -350,8 +330,7 @@ void Cache::readFile(QString fileName)
     }
     instructionNum = RWList.size();
 
-    //FDB
-    qDebug() <<"There are " << instructionNum << " instructions.";
+
 
 }
 
@@ -369,7 +348,6 @@ void Cache::iterateInput()
         {
             insType = "write";
         }
-        qDebug() << insType << "\t" << addressList.at(i);
     }
 }
 
@@ -440,8 +418,6 @@ QString Cache::getWritePolicy()
 void Cache::simulate()
 {
     this->init();
-    //FDB
-    qDebug() << "init done";
     hitNum = 0;         //keeps track of how many hits there are
     M2C = 0;            //keeps track of how many bytes of transfer from memory to cache there are
     C2M = 0;            //keeps track of how many bytes of transfer from cache to memory there are
@@ -452,11 +428,7 @@ void Cache::simulate()
     {
         long currentAddress = addressList.at(insInd);
         long currentTag = (long)(currentAddress/blockS/waySize);
-        //FDB
-        qDebug() << "The tag is" << currentTag;
         int currentSet = (int)((currentAddress/blockS)%waySize);
-        //FDB
-        qDebug() << "Belongs in set" << currentSet;
         int currentWay;     //goal is to find this
 
 
@@ -464,36 +436,25 @@ void Cache::simulate()
         //ON A READ
         if(RWList.at(insInd) == read_I)
         {
-            //FDB
-            qDebug() << "it's a read";
-            //currentWay = findTag(currentTag, currentSet);
             //////////////////////////////////////////////////////
             //ON A HIT
             if(currentWay != -1)   //if a hit
             {
-                //FDB
-                qDebug() << "read hit" << currentWay;
                 hitNum++;
             }
             else  //ON A MISS
             {
-                //FDB
-                qDebug() << "read miss" << currentWay;
                 //look for a place to put tag
                 ////////////////////
                 //EMPTY BLOCK FOUND
                 if((currentWay = this->findEmptyWay(currentSet)) != -1)
                 {
-                    //FDB
-                    qDebug() << "found empty block";
                     this->replace(currentWay,currentSet,currentTag);    //if so put it in there
                 }
                 else    //NO EMPTY BLOCKS
                 {
 
-                    currentWay = findOldest(currentSet);                    //Find the least recently used
-                    //FDB
-                    qDebug() << "evicted way" << currentWay;
+                    currentWay = findOldest(currentSet);                    //Find the least recently use
                     this->replace(currentWay, currentSet, currentTag);      //replace the least recently used
                     if(this->DBAt(currentWay,currentSet))                   //if there is a dirty bit
                     {
@@ -502,17 +463,13 @@ void Cache::simulate()
                     }
 
                 }
-                //FDB
-                qDebug() << "put in" << currentWay;
+
                 M2C += blockS;  //memory to cache transfer
             }
 
         }
         else if(RWList.at(insInd) == write_I)   //ON A WRITE
         {
-
-            //FDB
-            qDebug() << "it's a write";
             /////////////////////////////////////////////////
             //ON A WRITEBACK
             if(writeP == WB)
@@ -523,7 +480,6 @@ void Cache::simulate()
                 if(currentWay != -1)   //if a hit
                 {
                     hitNum++;
-                    //setDB(currentWay, currentSet, true);
                 }
                 //////////////////////////////////
                 //ON A MISS
@@ -543,9 +499,7 @@ void Cache::simulate()
                         {
                             C2M += blockS;                                          //cache to memory transfer due to writeback
                         }
-                        //FDB
-                        qDebug() << "dirty bit set";
-                        //this->setDB(currentWay,currentSet,true);                //set dirty bit to true
+
 
                     }
                     M2C += blockS;  //memory to cache transfer
@@ -559,8 +513,6 @@ void Cache::simulate()
                 //ON A HIT
                 if(currentWay != -1)
                 {
-                    //FDB
-                    qDebug() << "Write hit" << currentWay;
                     hitNum++;
                 }
                 else    //ON A MISS
@@ -578,8 +530,6 @@ void Cache::simulate()
                     }
 
                     M2C += blockS;    //memory to cache transfer bceause miss
-                    //FDB
-                    qDebug() << "put in" << currentWay;
                 }
                 C2M += 4;      //cache to memory tranfer due to immediate write from writethrough
             }
@@ -591,9 +541,6 @@ void Cache::simulate()
         age++;                                      //increment age
     }
     //FDB
-    int DBnum = countDirtyBits();
-    qDebug() << "There are" << DBnum << "dirty bits.";
-    //qDebug() << this->at(0,0) << "and" << this->at(1,0) << "and" << this->at(2,0);
     if(writeP == WB) C2M += (countDirtyBits() * blockS);    //evict the rest of the cache and update C2M
 }
 
