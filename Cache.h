@@ -317,16 +317,19 @@ void Cache::readFile(QString fileName)
     while(!stream.atEnd())
     {
         QString readLine = stream.readLine();
-        QStringList lineData;
-        if(readLine.contains("\t"))
-            lineData = readLine.split("\t");
-        else
-            lineData = readLine.split(" ");
-        if(lineData.at(0).contains("re"))
-            RWList.append(read_I);
-        else if(lineData.at(0).contains("wr")) RWList.append(write_I);
-        long tempAddress = lineData.at(1).trimmed().remove(0,2).toLong(0,16); //remove the newline character and convert to int
-        addressList.append(tempAddress);
+        if(!readLine.isEmpty())
+        {
+            QStringList lineData;
+            if(readLine.contains("\t"))
+                lineData = readLine.split("\t");
+            else
+                lineData = readLine.split(" ");
+            if(lineData.at(0).contains("re"))
+                RWList.append(read_I);
+            else if(lineData.at(0).contains("wr")) RWList.append(write_I);
+            long tempAddress = lineData.at(1).trimmed().remove(0,2).toLong(0,16); //remove the newline character and convert to int
+            addressList.append(tempAddress);
+        }
     }
     instructionNum = RWList.size();
 
